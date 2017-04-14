@@ -14,7 +14,7 @@ import org.springframework.context.annotation.ImportResource;
 @ComponentScan
 @ImportResource("classpath:spring-context.xml")
 public class SpringConfig implements CommandLineRunner {
-    private final static Logger LOGGER = Logger.getLogger(SpringConfig.class);
+    private static final Logger LOGGER = Logger.getLogger(SpringConfig.class);
 
     @Autowired
     private AppInitializer initializer;

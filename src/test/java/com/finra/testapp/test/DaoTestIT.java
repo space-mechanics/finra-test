@@ -16,7 +16,7 @@ import java.util.List;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {SpringConfig.class})
 public class DaoTestIT {
-    private final static Logger LOGGER = Logger.getLogger(DaoTestIT.class);
+    private static final Logger LOGGER = Logger.getLogger(DaoTestIT.class);
 
     @Autowired
     private AppDao appDao;
