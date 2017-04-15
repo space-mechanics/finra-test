@@ -1,6 +1,6 @@
 package com.finra.testapp.test;
 
-import com.finra.testapp.SpringConfig;
+import com.finra.testapp.Runner;
 import com.finra.testapp.dao.AppDao;
 import com.finra.testapp.domain.MetaDataEntry;
 import com.finra.testapp.domain.Request;
@@ -17,7 +17,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.util.List;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {SpringConfig.class})
+@SpringBootTest(classes = {Runner.class})
 public class DaoTestIT {
     private static final Logger LOGGER = Logger.getLogger(DaoTestIT.class);
 

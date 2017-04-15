@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -139,7 +140,7 @@ public class AppDaoImpl implements AppDao {
             if (!Strings.isNullOrEmpty(propertyKey)) {
                 metaDataEntry = new MetaDataEntry(propertyKey, propertyValue);
             }
-            return new Request(id, fileName, asOf, ByteSource.wrap(body), metaDataEntry);
+            return new Request(id, fileName, asOf, ByteSource.wrap(body), Arrays.asList(metaDataEntry));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

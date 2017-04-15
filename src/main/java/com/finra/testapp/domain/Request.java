@@ -15,15 +15,15 @@ public class Request {
     private List<MetaDataEntry> metaData;
 
     public Request(String fileName, ByteSource fileBody) {
-        this(null, fileName, LocalDateTime.now(), fileBody);
+        this(null, fileName, fileBody);
     }
 
-    public Request(Long id, String fileName, LocalDateTime asOf, ByteSource fileBody) {
-        this(id, fileName, asOf, fileBody, (List<MetaDataEntry>) null);
+    public Request(Long id, String fileName, ByteSource fileBody) {
+        this(id, fileName, fileBody, (List<MetaDataEntry>) null);
     }
 
-    public Request(Long id, String fileName, LocalDateTime asOf, ByteSource fileBody, MetaDataEntry metaData) {
-        this(id, fileName, asOf, fileBody, (List<MetaDataEntry>) (metaData != null ? Arrays.asList(metaData) : null));
+    public Request(Long id, String fileName, ByteSource fileBody, List<MetaDataEntry> metaData) {
+        this (id, fileName, LocalDateTime.now(), fileBody, metaData);
     }
 
     public Request(Long id, String fileName, LocalDateTime asOf, ByteSource fileBody, List<MetaDataEntry> metaData) {
