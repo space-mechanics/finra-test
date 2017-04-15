@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteSource;
 import org.joda.time.LocalDateTime;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class Request {
@@ -18,7 +19,11 @@ public class Request {
     }
 
     public Request(Long id, String fileName, LocalDateTime asOf, ByteSource fileBody) {
-        this(id, fileName, asOf, fileBody, null);
+        this(id, fileName, asOf, fileBody, (List<MetaDataEntry>) null);
+    }
+
+    public Request(Long id, String fileName, LocalDateTime asOf, ByteSource fileBody, MetaDataEntry metaData) {
+        this(id, fileName, asOf, fileBody, (List<MetaDataEntry>) (metaData != null ? Arrays.asList(metaData) : null));
     }
 
     public Request(Long id, String fileName, LocalDateTime asOf, ByteSource fileBody, List<MetaDataEntry> metaData) {
@@ -29,6 +34,10 @@ public class Request {
         if (metaData != null) {
             this.metaData = ImmutableList.copyOf(metaData);
         }
+    }
+
+    public Long getId() {
+        return id;
     }
 
     public String getFileName() {

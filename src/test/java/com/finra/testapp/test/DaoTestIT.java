@@ -2,9 +2,12 @@ package com.finra.testapp.test;
 
 import com.finra.testapp.SpringConfig;
 import com.finra.testapp.dao.AppDao;
+import com.finra.testapp.domain.MetaDataEntry;
 import com.finra.testapp.domain.Request;
 import com.google.common.io.ByteSource;
 import org.apache.log4j.Logger;
+import org.assertj.core.util.Lists;
+import org.joda.time.LocalDateTime;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,8 +44,12 @@ public class DaoTestIT {
     private void write(int iteration) {
         String fileName = String.format("file_%d", iteration);
         String body = String.format("test_%d", iteration);
-        Request request = new Request(fileName, ByteSource.wrap(body.getBytes()));
+        List<MetaDataEntry> metaDataEntries = Lists.newArrayList();
+        for (int i = 0; i < 10; i++) {
+            MetaDataEntry entry = new MetaDataEntry(String.format("Key_%d_%d", iteration, i), String.format("Value_%d_%d", iteration, i));
+            metaDataEntries.add(entry);
+        }
+        Request request = new Request(null, fileName, LocalDateTime.now(), ByteSource.wrap(body.getBytes()), metaDataEntries);
         appDao.saveRequest(request);
-
     }
 }

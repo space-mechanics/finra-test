@@ -2,9 +2,12 @@ package com.finra.testapp.dao;
 
 import com.finra.testapp.domain.MetaDataEntry;
 import com.finra.testapp.domain.Request;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
 import com.google.common.io.ByteSource;
 import com.google.common.io.ByteStreams;
 import org.apache.log4j.Logger;
+import org.assertj.core.util.Strings;
 import org.joda.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.*;
@@ -16,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.*;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class AppDaoImpl implements AppDao {
@@ -31,7 +35,19 @@ public class AppDaoImpl implements AppDao {
 
     private static final String SQL_INSERT_NEW_METADATA = "INSERT INTO METADATA (REQUEST_ID, PROPERTY_KEY, PROPERTY_VALUE) VALUES (?, ?, ?)";
 
-
+    private static final String SQL_READ_ALL =
+            "SELECT " +
+                    "r.REQUEST_ID " +
+                    ", r.FILE_NAME " +
+                    ", r.UPLOAD_TIMESTAMP " +
+                    ", r.FILE_BODY " +
+                    ", mt.PROPERTY_KEY " +
+                    ", mt.PROPERTY_VALUE " +
+                    "FROM " +
+                    "   REQUEST r " +
+                    "   inner join METADATA mt on mt.REQUEST_ID = r.REQUEST_ID " +
+                    "order by " +
+                    "   r.REQUEST_ID desc";
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -86,22 +102,46 @@ public class AppDaoImpl implements AppDao {
 
     @Override
     public List<Request> getAllRequests() {
-        List<Request> requests = jdbcTemplate.query("SELECT r.REQUEST_ID, r.FILE_NAME, r.UPLOAD_TIMESTAMP, r.FILE_BODY FROM REQUEST r",
+        final Map<Long, Request> requestMap = Maps.newHashMap();
+        jdbcTemplate.query(SQL_READ_ALL,
                 new RowMapper<Request>() {
             @Override
             public Request mapRow(ResultSet rs, int rowNum) throws SQLException {
-                try {
-                    long id = rs.getLong("REQUEST_ID");
-                    String fileName = rs.getString("FILE_NAME");
-                    LocalDateTime asOf = new LocalDateTime(rs.getTimestamp("UPLOAD_TIMESTAMP").getTime());
-                    Blob fileBody = rs.getBlob("FILE_BODY");
-                    byte[] body = ByteStreams.toByteArray(fileBody.getBinaryStream());
-                    return new Request(id, fileName, asOf, ByteSource.wrap(body));
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
+                Request newRequest = readRequestFields(rs);
+                Request savedRequest = requestMap.get(newRequest.getId());
+                if (savedRequest != null) {
+                    ImmutableList.Builder<MetaDataEntry> metadataBuilder = ImmutableList.<MetaDataEntry> builder();
+                    for (Request request : new Request[] {newRequest, savedRequest}) {
+                        List<MetaDataEntry> metaDataEntries = request.getMetaData();
+                        if (metaDataEntries != null) {
+                            metadataBuilder.addAll(metaDataEntries);
+                        }
+                    }
+                    newRequest = new Request(newRequest.getId(), newRequest.getFileName(), newRequest.getAsOf(), newRequest.getFileBody(), metadataBuilder.build());
                 }
+                requestMap.put(newRequest.getId(), newRequest);
+                return null;
             }
         });
-        return requests;
+        return ImmutableList.<Request> builder().addAll(requestMap.values()).build();
+    }
+
+    private Request readRequestFields(ResultSet rs) {
+        try {
+            long id = rs.getLong("REQUEST_ID");
+            String fileName = rs.getString("FILE_NAME");
+            LocalDateTime asOf = new LocalDateTime(rs.getTimestamp("UPLOAD_TIMESTAMP").getTime());
+            Blob fileBody = rs.getBlob("FILE_BODY");
+            byte[] body = ByteStreams.toByteArray(fileBody.getBinaryStream());
+            String propertyKey = rs.getString("PROPERTY_KEY");
+            String propertyValue = rs.getString("PROPERTY_VALUE");
+            MetaDataEntry metaDataEntry = null;
+            if (!Strings.isNullOrEmpty(propertyKey)) {
+                metaDataEntry = new MetaDataEntry(propertyKey, propertyValue);
+            }
+            return new Request(id, fileName, asOf, ByteSource.wrap(body), metaDataEntry);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
