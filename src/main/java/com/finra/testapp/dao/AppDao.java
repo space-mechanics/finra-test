@@ -15,5 +15,7 @@ public interface AppDao {
 
     FileAttachment getFileById(long id);
 
+    RequestFields getFileMetadataById(long id);
+
     List<RequestFields> getAllRequests();
 }

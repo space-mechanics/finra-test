@@ -1,5 +1,6 @@
 package com.finra.testapp.dao;
 
+import com.finra.testapp.dao.rowmapper.FileMetaDataRowMapper;
 import com.finra.testapp.domain.FileAttachment;
 import com.finra.testapp.domain.MetaDataEntry;
 import com.finra.testapp.domain.Request;
@@ -7,7 +8,6 @@ import com.finra.testapp.domain.RequestFields;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.google.common.io.ByteSource;
 import com.google.common.io.ByteStreams;
 import org.apache.log4j.Logger;
 import org.assertj.core.util.Strings;
@@ -39,17 +39,24 @@ public class AppDaoImpl implements AppDao {
 
     private static final String SQL_INSERT_NEW_METADATA = "INSERT INTO METADATA (REQUEST_ID, PROPERTY_KEY, PROPERTY_VALUE) VALUES (?, ?, ?)";
 
-    private static final String SQL_READ_ALL =
+    private static final String SQL_FILE_FIELDS =
             "SELECT " +
                     "r.REQUEST_ID " +
                     ", r.FILE_NAME " +
                     ", r.UPLOAD_TIMESTAMP " +
-                    ", r.FILE_BODY " +
                     ", mt.PROPERTY_KEY " +
                     ", mt.PROPERTY_VALUE " +
                     "FROM " +
                     "   REQUEST r " +
-                    "   inner join METADATA mt on mt.REQUEST_ID = r.REQUEST_ID " +
+                    "   inner join METADATA mt on mt.REQUEST_ID = r.REQUEST_ID ";
+
+    private static final String SQL_FILE_METADATA_BY_ID =
+            SQL_FILE_FIELDS +
+                    "WHERE " +
+                    "   r.REQUEST_ID = ?";
+
+    private static final String SQL_READ_ALL =
+            SQL_FILE_FIELDS +
                     "order by " +
                     "   r.REQUEST_ID desc";
 
@@ -113,46 +120,18 @@ public class AppDaoImpl implements AppDao {
     }
 
     @Override
-    public List<RequestFields> getAllRequests() {
-        final Map<Long, RequestFields> requestMap = Maps.newHashMap();
-        jdbcTemplate.query(SQL_READ_ALL,
-                new RowMapper<RequestFields>() {
-            @Override
-            public RequestFields mapRow(ResultSet rs, int rowNum) throws SQLException {
-                RequestFields newRequest = readRequestFields(rs);
-                RequestFields savedRequest = requestMap.get(newRequest.getId());
-                if (savedRequest != null) {
-                    ImmutableList.Builder<MetaDataEntry> metadataBuilder = ImmutableList.<MetaDataEntry> builder();
-                    for (RequestFields request : new RequestFields[] {newRequest, savedRequest}) {
-                        List<MetaDataEntry> metaDataEntries = request.getMetaData();
-                        if (metaDataEntries != null) {
-                            metadataBuilder.addAll(metaDataEntries);
-                        }
-                    }
-                    newRequest = new RequestFields(newRequest.getId(), newRequest.getFileName(), newRequest.getAsOf(), metadataBuilder.build());
-                }
-                requestMap.put(newRequest.getId(), newRequest);
-                return null;
-            }
-        });
-        return ImmutableList.<RequestFields> builder().addAll(requestMap.values()).build();
+    public RequestFields getFileMetadataById(long id) {
+        FileMetaDataRowMapper rowMapper = new FileMetaDataRowMapper();
+        jdbcTemplate.query(SQL_FILE_METADATA_BY_ID, rowMapper, id);
+        List<RequestFields> metadata = rowMapper.build();
+        return Iterables.getFirst(metadata, null);
     }
 
-    private RequestFields readRequestFields(ResultSet rs) {
-        try {
-            long id = rs.getLong("REQUEST_ID");
-            String fileName = rs.getString("FILE_NAME");
-            LocalDateTime asOf = new LocalDateTime(rs.getTimestamp("UPLOAD_TIMESTAMP").getTime());
-            String propertyKey = rs.getString("PROPERTY_KEY");
-            String propertyValue = rs.getString("PROPERTY_VALUE");
-            MetaDataEntry metaDataEntry = null;
-            if (!Strings.isNullOrEmpty(propertyKey)) {
-                metaDataEntry = new MetaDataEntry(propertyKey, propertyValue);
-            }
-            return new RequestFields(id, fileName, asOf, Arrays.asList(metaDataEntry));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    @Override
+    public List<RequestFields> getAllRequests() {
+        FileMetaDataRowMapper rowMapper = new FileMetaDataRowMapper();
+        jdbcTemplate.query(SQL_READ_ALL, rowMapper);
+        return rowMapper.build();
     }
 
     @Override

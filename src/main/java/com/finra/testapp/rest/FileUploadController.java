@@ -2,6 +2,7 @@ package com.finra.testapp.rest;
 
 import com.finra.testapp.dao.AppDao;
 import com.finra.testapp.domain.*;
+import com.finra.testapp.util.AppUtils;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.FluentIterable;
@@ -69,15 +70,24 @@ public class FileUploadController {
     @GetMapping(value = "/findAll", produces = {"application/json; charset=UTF-8"})
     @ResponseBody
     public ResponseEntity<List<JsonRequest>> findAll() {
-        List<JsonRequest> requests =FluentIterable.from(appDao.getAllRequests()).transform(new Function<RequestFields, JsonRequest>() {
+        List<JsonRequest> requests = FluentIterable.from(appDao.getAllRequests()).transform(new Function<RequestFields, JsonRequest>() {
             @Override
             public JsonRequest apply(RequestFields input) {
-                LocalDateTime asOf = input.getAsOf();
-                String asOfStr = ISODateTimeFormat.dateHourMinuteSecond().print(asOf);
-                return new JsonRequest(input.getId(), input.getFileName(), asOfStr, input.getMetaData());
+                return AppUtils.toJsonRequest(input);
             }
         }).toList();
         return ResponseEntity.ok(requests);
+    }
+
+    @GetMapping(value = "/fileMetadata/{id:[\\d]+}", produces = {"application/json; charset=UTF-8"})
+    @ResponseBody
+    public ResponseEntity<JsonRequest> fileMetadata(@PathVariable("id") long id) {
+        RequestFields metadata = appDao.getFileMetadataById(id);
+        if (metadata == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        JsonRequest json = AppUtils.toJsonRequest(metadata);
+        return ResponseEntity.ok(json);
     }
 
     @GetMapping(value = "/file/{id:[\\d]+}", produces = "application/octet-stream")
