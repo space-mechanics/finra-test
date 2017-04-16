@@ -48,7 +48,7 @@ public class AppDaoImpl implements AppDao {
                     ", mt.PROPERTY_VALUE " +
                     "FROM " +
                     "   REQUEST r " +
-                    "   inner join METADATA mt on mt.REQUEST_ID = r.REQUEST_ID ";
+                    "   left join METADATA mt on mt.REQUEST_ID = r.REQUEST_ID ";
 
     private static final String SQL_FILE_METADATA_BY_ID =
             SQL_FILE_FIELDS +

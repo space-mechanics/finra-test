@@ -10,8 +10,6 @@ import com.google.common.io.ByteSource;
 import org.apache.log4j.Logger;
 import org.assertj.core.util.Lists;
 import org.assertj.core.util.Strings;
-import org.joda.time.LocalDateTime;
-import org.joda.time.format.ISODateTimeFormat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -29,6 +27,8 @@ public class FileUploadController {
 
     private static final String DESCRIPTION_PARAM = "description";
     private static final String TYPE_PARAM = "type";
+    private static final String FILE_SIZE_PARAM = "fileSize";
+    private static final String CONTENT_TYPE_PARAM = "contentType";
 
     @Autowired
     private AppDao appDao;
@@ -42,6 +42,8 @@ public class FileUploadController {
                 throw new IllegalStateException("File body is empty.");
             }
             List<MetaDataEntry> entries = Lists.newArrayList();
+            entries.add(new MetaDataEntry(FILE_SIZE_PARAM, String.valueOf(fileBody.getSize())));
+            entries.add(new MetaDataEntry(CONTENT_TYPE_PARAM, String.valueOf(fileBody.getContentType())));
             addMetadata(entries, DESCRIPTION_PARAM, description);
             addMetadata(entries, TYPE_PARAM, type);
             final String fileName = fileBody.getOriginalFilename();

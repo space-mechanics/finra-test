@@ -47,7 +47,7 @@ public class FileMetaDataRowMapper implements RowMapper<RequestFields>, Builder<
             if (!Strings.isNullOrEmpty(propertyKey)) {
                 metaDataEntry = new MetaDataEntry(propertyKey, propertyValue);
             }
-            return new RequestFields(id, fileName, asOf, Arrays.asList(metaDataEntry));
+            return new RequestFields(id, fileName, asOf, metaDataEntry != null ? Arrays.asList(metaDataEntry) : null);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
