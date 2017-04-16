@@ -14,7 +14,7 @@ Params:
     "description" - string (optional)
     "type" - string (optional)
 Description:
-    Enabled the application to upload files and save files' metadata into H2 in memory data base.
+    Enables the application to upload files and save files' metadata into H2 in memory data base.
 
 2)
 Http Method: GET
