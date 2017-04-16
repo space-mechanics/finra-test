@@ -1,8 +1,11 @@
 package com.finra.testapp.dao;
 
+import com.finra.testapp.domain.FileAttachment;
 import com.finra.testapp.domain.MetaDataEntry;
 import com.finra.testapp.domain.Request;
+import com.finra.testapp.domain.RequestFields;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteSource;
 import com.google.common.io.ByteStreams;
@@ -49,6 +52,14 @@ public class AppDaoImpl implements AppDao {
                     "   inner join METADATA mt on mt.REQUEST_ID = r.REQUEST_ID " +
                     "order by " +
                     "   r.REQUEST_ID desc";
+
+    private static final String SQL_GET_BODY_BY_REQUEST_ID =
+            "SELECT " +
+                    "r.FILE_NAME " +
+                    ", r.FILE_BODY " +
+                    "FROM " +
+                    "   REQUEST r " +
+                    "WHERE r.REQUEST_ID = ? ";
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -102,47 +113,63 @@ public class AppDaoImpl implements AppDao {
     }
 
     @Override
-    public List<Request> getAllRequests() {
-        final Map<Long, Request> requestMap = Maps.newHashMap();
+    public List<RequestFields> getAllRequests() {
+        final Map<Long, RequestFields> requestMap = Maps.newHashMap();
         jdbcTemplate.query(SQL_READ_ALL,
-                new RowMapper<Request>() {
+                new RowMapper<RequestFields>() {
             @Override
-            public Request mapRow(ResultSet rs, int rowNum) throws SQLException {
-                Request newRequest = readRequestFields(rs);
-                Request savedRequest = requestMap.get(newRequest.getId());
+            public RequestFields mapRow(ResultSet rs, int rowNum) throws SQLException {
+                RequestFields newRequest = readRequestFields(rs);
+                RequestFields savedRequest = requestMap.get(newRequest.getId());
                 if (savedRequest != null) {
                     ImmutableList.Builder<MetaDataEntry> metadataBuilder = ImmutableList.<MetaDataEntry> builder();
-                    for (Request request : new Request[] {newRequest, savedRequest}) {
+                    for (RequestFields request : new RequestFields[] {newRequest, savedRequest}) {
                         List<MetaDataEntry> metaDataEntries = request.getMetaData();
                         if (metaDataEntries != null) {
                             metadataBuilder.addAll(metaDataEntries);
                         }
                     }
-                    newRequest = new Request(newRequest.getId(), newRequest.getFileName(), newRequest.getAsOf(), newRequest.getFileBody(), metadataBuilder.build());
+                    newRequest = new RequestFields(newRequest.getId(), newRequest.getFileName(), newRequest.getAsOf(), metadataBuilder.build());
                 }
                 requestMap.put(newRequest.getId(), newRequest);
                 return null;
             }
         });
-        return ImmutableList.<Request> builder().addAll(requestMap.values()).build();
+        return ImmutableList.<RequestFields> builder().addAll(requestMap.values()).build();
     }
 
-    private Request readRequestFields(ResultSet rs) {
+    private RequestFields readRequestFields(ResultSet rs) {
         try {
             long id = rs.getLong("REQUEST_ID");
             String fileName = rs.getString("FILE_NAME");
             LocalDateTime asOf = new LocalDateTime(rs.getTimestamp("UPLOAD_TIMESTAMP").getTime());
-            Blob fileBody = rs.getBlob("FILE_BODY");
-            byte[] body = ByteStreams.toByteArray(fileBody.getBinaryStream());
             String propertyKey = rs.getString("PROPERTY_KEY");
             String propertyValue = rs.getString("PROPERTY_VALUE");
             MetaDataEntry metaDataEntry = null;
             if (!Strings.isNullOrEmpty(propertyKey)) {
                 metaDataEntry = new MetaDataEntry(propertyKey, propertyValue);
             }
-            return new Request(id, fileName, asOf, ByteSource.wrap(body), Arrays.asList(metaDataEntry));
+            return new RequestFields(id, fileName, asOf, Arrays.asList(metaDataEntry));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public FileAttachment getFileById(long id) {
+        List<FileAttachment> body = jdbcTemplate.query(SQL_GET_BODY_BY_REQUEST_ID, new RowMapper<FileAttachment>() {
+            @Override
+            public FileAttachment mapRow(ResultSet rs, int rowNum) throws SQLException {
+                try {
+                    String fileName = rs.getString("FILE_NAME");
+                    Blob fileBody = rs.getBlob("FILE_BODY");
+                    byte[] body = ByteStreams.toByteArray(fileBody.getBinaryStream());
+                    return new FileAttachment(fileName, body);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }, id);
+        return Iterables.getFirst(body, null);
     }
 }

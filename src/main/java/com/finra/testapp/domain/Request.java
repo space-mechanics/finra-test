@@ -1,18 +1,12 @@
 package com.finra.testapp.domain;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteSource;
 import org.joda.time.LocalDateTime;
 
-import java.util.Arrays;
 import java.util.List;
 
-public class Request {
-    private Long id;
-    private String fileName;
-    private LocalDateTime asOf;
+public class Request extends RequestFields {
     private ByteSource fileBody;
-    private List<MetaDataEntry> metaData;
 
     public Request(String fileName, ByteSource fileBody) {
         this(null, fileName, fileBody);
@@ -27,25 +21,20 @@ public class Request {
     }
 
     public Request(Long id, String fileName, LocalDateTime asOf, ByteSource fileBody, List<MetaDataEntry> metaData) {
-        this.id = id;
-        this.fileName = fileName;
-        this.asOf = asOf;
+        super(id, fileName, asOf, metaData);
         this.fileBody = fileBody;
-        if (metaData != null) {
-            this.metaData = ImmutableList.copyOf(metaData);
-        }
     }
 
     public Long getId() {
-        return id;
+        return super.getId();
     }
 
     public String getFileName() {
-        return fileName;
+        return super.getFileName();
     }
 
     public LocalDateTime getAsOf() {
-        return asOf;
+        return super.getAsOf();
     }
 
     public ByteSource getFileBody() {
@@ -53,17 +42,17 @@ public class Request {
     }
 
     public List<MetaDataEntry> getMetaData() {
-        return metaData;
+        return super.getMetaData();
     }
 
     @Override
     public String toString() {
         return "Request{" +
-                "id=" + id +
-                ", fileName='" + fileName + '\'' +
-                ", asOf=" + asOf +
+                "id=" + getId() +
+                ", fileName='" + getFileName() + '\'' +
+                ", asOf=" + getAsOf() +
                 ", fileBody=" + fileBody +
-                ", metaData=" + metaData +
+                ", metaData=" + getMetaData() +
                 '}';
     }
 }

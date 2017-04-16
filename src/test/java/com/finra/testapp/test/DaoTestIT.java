@@ -4,6 +4,7 @@ import com.finra.testapp.Runner;
 import com.finra.testapp.dao.AppDao;
 import com.finra.testapp.domain.MetaDataEntry;
 import com.finra.testapp.domain.Request;
+import com.finra.testapp.domain.RequestFields;
 import com.google.common.io.ByteSource;
 import org.apache.log4j.Logger;
 import org.assertj.core.util.Lists;
@@ -35,8 +36,8 @@ public class DaoTestIT {
         for (int i = 1; i < 11; i++) {
             write(i);
         }
-        List<Request> requests = appDao.getAllRequests();
-        for (Request request : requests) {
+        List<RequestFields> requests = appDao.getAllRequests();
+        for (RequestFields request : requests) {
             LOGGER.info(request);
         }
     }
