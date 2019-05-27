@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 public class FileMetaDataRowMapper implements RowMapper<RequestFields>, Builder<List<RequestFields>> {
-    final Map<Long, RequestFields> requestMap = Maps.newHashMap();
+    private final Map<Long, RequestFields> requestMap = Maps.newHashMap();
 
     @Override
     public RequestFields mapRow(ResultSet rs, int rowNum) throws SQLException {
