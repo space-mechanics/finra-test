@@ -5,15 +5,14 @@ import com.finra.testapp.domain.FileAttachment;
 import com.finra.testapp.domain.MetaDataEntry;
 import com.finra.testapp.domain.Request;
 import com.finra.testapp.domain.RequestFields;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import org.apache.log4j.Logger;
-import org.assertj.core.util.Strings;
-import org.joda.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.*;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
@@ -21,9 +20,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.*;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 @Component
 public class AppDaoImpl implements AppDao {
